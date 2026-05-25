@@ -12,7 +12,7 @@
         "changelog": "Initial release: per-movie chat, private messaging, content reporting.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/pulgamecanica/JellyfinPulga/releases/download/plugin-v0.1.0/jellyfin-pulga-plugin.zip",
-        "checksum": "",
+        "checksum": "a2720c7d8093776ac7c5fe368707d539",
         "timestamp": "2026-05-25T00:00:00Z"
       }
     ]
