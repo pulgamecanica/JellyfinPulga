@@ -1,0 +1,25 @@
+[package]
+name = "jellyfin-pulga"
+version = "0.1.0"
+edition = "2024"
+description = "Jellyfin media server management toolkit — junk cleanup, corruption detection, chat"
+license = "MIT"
+repository = "https://github.com/pulgamecanica/JellyfinPulga"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+reqwest = { version = "0.12", features = ["json"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+axum = { version = "0.8", features = ["ws"] }
+rusqlite = { version = "0.33", features = ["bundled"] }
+toml = "0.8"
+walkdir = "2"
+colored = "3"
+indicatif = "0.17"
+chrono = { version = "0.4", features = ["serde"] }
+tower-http = { version = "0.6", features = ["fs", "cors"] }
+uuid = { version = "1", features = ["v4"] }
+tokio-tungstenite = "0.26"
+futures-util = "0.3"
