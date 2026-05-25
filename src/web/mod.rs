@@ -10,14 +10,14 @@ use tower_http::services::ServeDir;
 pub struct AppState {
     pub db: ChatDb,
     pub api: JellyfinApi,
-    pub config: Config,
 }
 
 pub async fn start_server(config: Config) -> Result<(), Box<dyn std::error::Error>> {
-    let db = ChatDb::new("jellyfin_pulga.db")?;
+    let db_path = std::env::var("PULGA_DB_PATH").unwrap_or_else(|_| "jellyfin_pulga.db".to_string());
+    let db = ChatDb::new(&db_path)?;
     let api = JellyfinApi::new(&config.jellyfin);
 
-    let state = Arc::new(AppState { db, api, config: config.clone() });
+    let state = Arc::new(AppState { db, api });
 
     let app = Router::new()
         .nest("/api", routes::api_routes())

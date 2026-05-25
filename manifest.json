@@ -1,0 +1,20 @@
+[
+  {
+    "guid": "e4a1c0d3-7f2b-4a8e-9d6c-3b5f1e0a2c4d",
+    "name": "JellyfinPulga",
+    "description": "Community tools: per-movie chat rooms, private messaging between users, content reporting and flagging system.",
+    "overview": "Chat, messaging, and content reporting for your Jellyfin community",
+    "owner": "pulgamecanica",
+    "category": "General",
+    "versions": [
+      {
+        "version": "0.1.0.0",
+        "changelog": "Initial release: per-movie chat, private messaging, content reporting.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/pulgamecanica/JellyfinPulga/releases/download/plugin-v0.1.0/jellyfin-pulga-plugin.zip",
+        "checksum": "",
+        "timestamp": "2026-05-25T00:00:00Z"
+      }
+    ]
+  }
+]

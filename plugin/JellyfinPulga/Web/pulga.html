@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pulga Community</title>
+</head>
+<body>
+  <div id="PulgaPage" data-role="page" class="page type-interior">
+    <div data-role="content">
+      <div class="content-primary">
+        <div id="pulga-app">
+          <div class="pulga-nav">
+            <button class="pulga-tab active" data-tab="chat">Chat</button>
+            <button class="pulga-tab" data-tab="reports">Reports</button>
+            <button class="pulga-tab" data-tab="messages">Messages</button>
+          </div>
+
+          <div id="pulga-chat" class="pulga-panel">
+            <div class="pulga-search">
+              <input type="text" id="pulga-movie-search" placeholder="Search movies to chat about..." is="emby-input" />
+            </div>
+            <div id="pulga-room-list" class="pulga-list"></div>
+            <div id="pulga-chat-area" class="pulga-hidden">
+              <div id="pulga-chat-header">
+                <button id="pulga-chat-back">&larr;</button>
+                <span id="pulga-chat-title"></span>
+              </div>
+              <div id="pulga-chat-messages"></div>
+              <div class="pulga-input-row">
+                <input type="text" id="pulga-chat-input" placeholder="Type a message..." is="emby-input" />
+                <button id="pulga-chat-send" is="emby-button" class="raised">Send</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="pulga-reports" class="pulga-panel pulga-hidden">
+            <div class="pulga-filter-row">
+              <select id="pulga-report-filter" is="emby-select">
+                <option value="">All reports</option>
+                <option value="open">Open</option>
+                <option value="reviewed">Reviewed</option>
+                <option value="resolved">Resolved</option>
+                <option value="dismissed">Dismissed</option>
+              </select>
+            </div>
+            <div id="pulga-report-list" class="pulga-list"></div>
+          </div>
+
+          <div id="pulga-messages" class="pulga-panel pulga-hidden">
+            <div class="pulga-messages-layout">
+              <div id="pulga-convo-list" class="pulga-list"></div>
+              <div id="pulga-pm-area" class="pulga-hidden">
+                <div id="pulga-pm-header"></div>
+                <div id="pulga-pm-messages"></div>
+                <div class="pulga-input-row">
+                  <input type="text" id="pulga-pm-input" placeholder="Type a message..." is="emby-input" />
+                  <button id="pulga-pm-send" is="emby-button" class="raised">Send</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="pulga-report-modal" class="pulga-modal pulga-hidden">
+          <div class="pulga-modal-content">
+            <h3>Report Content</h3>
+            <input type="hidden" id="pulga-report-item-id" />
+            <input type="hidden" id="pulga-report-item-name" />
+            <label>Reason:</label>
+            <select id="pulga-report-reason" is="emby-select">
+              <option value="corrupted">Corrupted file</option>
+              <option value="wrong-content">Wrong content</option>
+              <option value="missing-subtitles">Missing subtitles</option>
+              <option value="bad-quality">Bad quality</option>
+              <option value="duplicate">Duplicate</option>
+              <option value="other">Other</option>
+            </select>
+            <label>Details:</label>
+            <textarea id="pulga-report-details" rows="3" is="emby-textarea"></textarea>
+            <div class="pulga-modal-actions">
+              <button id="pulga-report-submit" is="emby-button" class="raised button-submit">Submit</button>
+              <button id="pulga-report-cancel" is="emby-button">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <link rel="stylesheet" href="configurationpage?name=JellyfinPulgaCSS" />
+  <script src="configurationpage?name=JellyfinPulgaJS"></script>
+</body>
+</html>

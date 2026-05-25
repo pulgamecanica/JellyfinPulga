@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JellyfinPulga</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav id="sidebar">
+    <h1>JellyfinPulga</h1>
+    <ul>
+      <li><a href="#" data-view="movies" class="active">Movies</a></li>
+      <li><a href="#" data-view="flagged">Flagged</a></li>
+      <li><a href="#" data-view="reports">Reports</a></li>
+      <li><a href="#" data-view="users">Users</a></li>
+      <li><a href="#" data-view="messages">Messages</a></li>
+    </ul>
+    <div id="user-select">
+      <label for="current-user">Logged in as:</label>
+      <select id="current-user"></select>
+    </div>
+  </nav>
+
+  <main id="content">
+    <div id="view-movies" class="view">
+      <h2>Movies</h2>
+      <input type="text" id="movie-search" placeholder="Search movies...">
+      <div id="movie-list" class="item-grid"></div>
+    </div>
+
+    <div id="view-flagged" class="view hidden">
+      <h2>Flagged for Review</h2>
+      <button id="export-flagged">Export TSV</button>
+      <div id="flagged-list" class="item-list"></div>
+    </div>
+
+    <div id="view-reports" class="view hidden">
+      <h2>Content Reports</h2>
+      <div class="report-filters">
+        <select id="report-filter">
+          <option value="">All</option>
+          <option value="open">Open</option>
+          <option value="reviewed">Reviewed</option>
+          <option value="resolved">Resolved</option>
+          <option value="dismissed">Dismissed</option>
+        </select>
+      </div>
+      <div id="report-list" class="item-list"></div>
+    </div>
+
+    <div id="view-users" class="view hidden">
+      <h2>Users</h2>
+      <div id="user-list" class="item-list"></div>
+    </div>
+
+    <div id="view-messages" class="view hidden">
+      <h2>Messages</h2>
+      <div class="messages-layout">
+        <div id="conversation-list" class="conversation-sidebar"></div>
+        <div id="message-area">
+          <div id="message-header"></div>
+          <div id="message-content"></div>
+          <div id="message-input-area" class="hidden">
+            <input type="text" id="pm-input" placeholder="Type a message...">
+            <button id="pm-send">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="chat-panel" class="hidden">
+      <div id="chat-header">
+        <span id="chat-title"></span>
+        <button id="chat-close">&times;</button>
+      </div>
+      <div id="chat-messages"></div>
+      <div id="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Say something...">
+        <button id="chat-send">Send</button>
+      </div>
+    </div>
+
+    <div id="report-modal" class="modal hidden">
+      <div class="modal-content">
+        <h3>Report Content</h3>
+        <input type="hidden" id="report-item-id">
+        <input type="hidden" id="report-item-name">
+        <label>Reason:</label>
+        <select id="report-reason">
+          <option value="corrupted">Corrupted file</option>
+          <option value="wrong-content">Wrong content</option>
+          <option value="missing-subtitles">Missing subtitles</option>
+          <option value="bad-quality">Bad quality</option>
+          <option value="duplicate">Duplicate</option>
+          <option value="other">Other</option>
+        </select>
+        <label>Details:</label>
+        <textarea id="report-details" rows="3"></textarea>
+        <div class="modal-actions">
+          <button id="report-submit">Submit Report</button>
+          <button id="report-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

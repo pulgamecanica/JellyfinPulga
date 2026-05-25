@@ -99,6 +99,7 @@ impl ReportStatus {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BlockedUser {
     pub user_id: String,

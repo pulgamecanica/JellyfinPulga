@@ -2,6 +2,15 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
+#[allow(dead_code)]
+pub struct ServerInfo {
+    pub server_name: String,
+    pub version: String,
+    pub id: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct ItemsResponse {
     pub items: Vec<JellyfinItem>,
     pub total_record_count: u64,
@@ -47,6 +56,7 @@ pub struct JellyfinUser {
     pub has_password: bool,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct LibraryInfo {

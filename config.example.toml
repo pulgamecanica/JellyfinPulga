@@ -9,3 +9,15 @@ ffprobe_path = "/usr/lib/jellyfin-ffmpeg/ffprobe"
 [server]
 host = "0.0.0.0"
 port = 3000
+
+# How file operations (scan, clean, check) execute.
+# "ssh" (default) — run commands on a remote server over SSH
+# "local" — run on the same machine (used inside the deployed container)
+[execution]
+mode = "ssh"
+
+[execution.ssh]
+host = "192.168.1.37"
+user = "pulgamecanica-serv"
+port = 22
+# key_path = "~/.ssh/id_rsa"  # optional, defaults to ssh-agent

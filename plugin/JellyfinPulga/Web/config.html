@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>JellyfinPulga</title>
+</head>
+<body>
+  <div id="PulgaConfigPage" data-role="page" class="page type-interior pluginConfigurationPage"
+       data-require="emby-checkbox,emby-input">
+    <div data-role="content">
+      <div class="content-primary">
+        <h2>JellyfinPulga Settings</h2>
+        <form id="PulgaConfigForm">
+          <div class="checkboxContainer">
+            <label>
+              <input type="checkbox" id="EnableChat" is="emby-checkbox" />
+              <span>Enable per-movie chat rooms</span>
+            </label>
+          </div>
+          <div class="checkboxContainer">
+            <label>
+              <input type="checkbox" id="EnableReporting" is="emby-checkbox" />
+              <span>Enable content reporting</span>
+            </label>
+          </div>
+          <div class="checkboxContainer">
+            <label>
+              <input type="checkbox" id="EnablePrivateMessages" is="emby-checkbox" />
+              <span>Enable private messages between users</span>
+            </label>
+          </div>
+          <div class="inputContainer">
+            <label for="MaxChatMessages">Max chat messages per room:</label>
+            <input type="number" id="MaxChatMessages" is="emby-input" min="50" max="1000" />
+          </div>
+          <br />
+          <button is="emby-button" type="submit" class="raised button-submit block">
+            <span>Save</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script>
+    const PulgaConfig = {
+      pluginId: 'e4a1c0d3-7f2b-4a8e-9d6c-3b5f1e0a2c4d'
+    };
+
+    document.querySelector('#PulgaConfigPage')
+      .addEventListener('pageshow', function () {
+        ApiClient.getPluginConfiguration(PulgaConfig.pluginId).then(function (config) {
+          document.getElementById('EnableChat').checked = config.EnableChat;
+          document.getElementById('EnableReporting').checked = config.EnableReporting;
+          document.getElementById('EnablePrivateMessages').checked = config.EnablePrivateMessages;
+          document.getElementById('MaxChatMessages').value = config.MaxChatMessages;
+        });
+      });
+
+    document.getElementById('PulgaConfigForm')
+      .addEventListener('submit', function (e) {
+        e.preventDefault();
+        ApiClient.getPluginConfiguration(PulgaConfig.pluginId).then(function (config) {
+          config.EnableChat = document.getElementById('EnableChat').checked;
+          config.EnableReporting = document.getElementById('EnableReporting').checked;
+          config.EnablePrivateMessages = document.getElementById('EnablePrivateMessages').checked;
+          config.MaxChatMessages = parseInt(document.getElementById('MaxChatMessages').value, 10);
+          ApiClient.updatePluginConfiguration(PulgaConfig.pluginId, config).then(function () {
+            Dashboard.processPluginConfigurationUpdateResult();
+          });
+        });
+      });
+  </script>
+</body>
+</html>

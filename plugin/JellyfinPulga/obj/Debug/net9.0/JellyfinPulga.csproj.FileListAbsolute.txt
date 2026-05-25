@@ -1,0 +1,13 @@
+/home/pulgamecanica/JellyfinPulga/plugin/JellyfinPulga/obj/Debug/net9.0/JellyfinPulga.csproj.AssemblyReference.cache
+/home/pulgamecanica/JellyfinPulga/plugin/JellyfinPulga/obj/Debug/net9.0/JellyfinPulga.GeneratedMSBuildEditorConfig.editorconfig
+/home/pulgamecanica/JellyfinPulga/plugin/JellyfinPulga/obj/Debug/net9.0/JellyfinPulga.AssemblyInfoInputs.cache
+/home/pulgamecanica/JellyfinPulga/plugin/JellyfinPulga/obj/Debug/net9.0/JellyfinPulga.AssemblyInfo.cs
+/home/pulgamecanica/JellyfinPulga/plugin/JellyfinPulga/obj/Debug/net9.0/JellyfinPulga.csproj.CoreCompileInputs.cache
+/home/pulgamecanica/JellyfinPulga/plugin/JellyfinPulga/obj/Debug/net9.0/JellyfinPulga.sourcelink.json
+/home/pulgamecanica/JellyfinPulga/plugin/JellyfinPulga/bin/Debug/net9.0/JellyfinPulga.deps.json
+/home/pulgamecanica/JellyfinPulga/plugin/JellyfinPulga/bin/Debug/net9.0/JellyfinPulga.dll
+/home/pulgamecanica/JellyfinPulga/plugin/JellyfinPulga/bin/Debug/net9.0/JellyfinPulga.pdb
+/home/pulgamecanica/JellyfinPulga/plugin/JellyfinPulga/obj/Debug/net9.0/JellyfinPulga.dll
+/home/pulgamecanica/JellyfinPulga/plugin/JellyfinPulga/obj/Debug/net9.0/refint/JellyfinPulga.dll
+/home/pulgamecanica/JellyfinPulga/plugin/JellyfinPulga/obj/Debug/net9.0/JellyfinPulga.pdb
+/home/pulgamecanica/JellyfinPulga/plugin/JellyfinPulga/obj/Debug/net9.0/ref/JellyfinPulga.dll

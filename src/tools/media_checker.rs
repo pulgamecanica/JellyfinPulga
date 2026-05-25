@@ -1,9 +1,8 @@
+use crate::executor::Executor;
 use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
-use std::process::Command;
-use walkdir::WalkDir;
+use std::path::PathBuf;
 
 const MEDIA_EXTENSIONS: &[&str] = &[
     "mkv", "mp4", "avi", "mov", "wmv", "flv", "webm", "m4v", "mpg", "mpeg", "ts",
@@ -63,61 +62,27 @@ struct FfprobeFormat {
     duration: Option<String>,
 }
 
-pub fn find_media_files(paths: &[PathBuf]) -> Vec<PathBuf> {
+pub fn find_media_files(executor: &Executor, paths: &[PathBuf]) -> Vec<String> {
     let mut files = Vec::new();
     for base in paths {
-        for entry in WalkDir::new(base).into_iter().filter_map(|e| e.ok()) {
-            if !entry.file_type().is_file() {
-                continue;
-            }
-            let ext = entry
-                .path()
-                .extension()
-                .and_then(|e| e.to_str())
-                .unwrap_or("")
-                .to_lowercase();
-            if MEDIA_EXTENSIONS.contains(&ext.as_str()) {
-                files.push(entry.into_path());
-            }
+        let path_str = base.display().to_string();
+        match executor.list_files(&path_str, MEDIA_EXTENSIONS) {
+            Ok(found) => files.extend(found),
+            Err(e) => eprintln!("  {} scanning {}: {e}", "Warning:".yellow(), path_str),
         }
     }
     files.sort();
     files
 }
 
-pub fn check_file(ffprobe_path: &Path, file: &Path) -> MediaFileStatus {
-    let path_str = file.display().to_string();
-
-    if let Ok(meta) = file.metadata() {
-        if meta.len() == 0 {
-            return MediaFileStatus {
-                path: path_str,
-                status: CheckStatus::ZeroLength,
-                details: "file is empty".into(),
-                duration_secs: None,
-                codec: None,
-                resolution: None,
-            };
-        }
-    }
-
-    let output = Command::new(ffprobe_path)
-        .args([
-            "-v", "error",
-            "-print_format", "json",
-            "-show_streams",
-            "-show_format",
-        ])
-        .arg(file)
-        .output();
-
-    let output = match output {
-        Ok(o) => o,
+pub fn check_file(executor: &Executor, ffprobe_path: &str, file: &str) -> MediaFileStatus {
+    let result = match executor.run_ffprobe(ffprobe_path, file) {
+        Ok(r) => r,
         Err(e) => {
             return MediaFileStatus {
-                path: path_str,
+                path: file.to_string(),
                 status: CheckStatus::Unreadable,
-                details: format!("ffprobe failed to execute: {e}"),
+                details: format!("ffprobe execution failed: {e}"),
                 duration_secs: None,
                 codec: None,
                 resolution: None,
@@ -125,24 +90,22 @@ pub fn check_file(ffprobe_path: &Path, file: &Path) -> MediaFileStatus {
         }
     };
 
-    let stderr = String::from_utf8_lossy(&output.stderr);
-
-    if !output.status.success() {
+    if !result.success {
         return MediaFileStatus {
-            path: path_str,
+            path: file.to_string(),
             status: CheckStatus::Corrupted,
-            details: format!("ffprobe returned error: {}", stderr.trim()),
+            details: format!("ffprobe error: {}", result.stderr.lines().next().unwrap_or("").trim()),
             duration_secs: None,
             codec: None,
             resolution: None,
         };
     }
 
-    let probe: FfprobeOutput = match serde_json::from_slice(&output.stdout) {
+    let probe: FfprobeOutput = match serde_json::from_str(&result.stdout) {
         Ok(p) => p,
         Err(e) => {
             return MediaFileStatus {
-                path: path_str,
+                path: file.to_string(),
                 status: CheckStatus::Corrupted,
                 details: format!("failed to parse ffprobe output: {e}"),
                 duration_secs: None,
@@ -167,11 +130,9 @@ pub fn check_file(ffprobe_path: &Path, file: &Path) -> MediaFileStatus {
         .find(|s| s.codec_type.as_deref() == Some("video"));
 
     let codec = video_stream.and_then(|s| s.codec_name.clone());
-    let resolution = video_stream.and_then(|s| {
-        match (s.width, s.height) {
-            (Some(w), Some(h)) => Some(format!("{w}x{h}")),
-            _ => None,
-        }
+    let resolution = video_stream.and_then(|s| match (s.width, s.height) {
+        (Some(w), Some(h)) => Some(format!("{w}x{h}")),
+        _ => None,
     });
 
     let duration_secs = probe
@@ -182,7 +143,7 @@ pub fn check_file(ffprobe_path: &Path, file: &Path) -> MediaFileStatus {
 
     if !has_video {
         return MediaFileStatus {
-            path: path_str,
+            path: file.to_string(),
             status: CheckStatus::MissingVideo,
             details: "no video stream found".into(),
             duration_secs,
@@ -193,7 +154,7 @@ pub fn check_file(ffprobe_path: &Path, file: &Path) -> MediaFileStatus {
 
     if !has_audio {
         return MediaFileStatus {
-            path: path_str,
+            path: file.to_string(),
             status: CheckStatus::MissingAudio,
             details: "no audio stream found (video-only file)".into(),
             duration_secs,
@@ -202,11 +163,14 @@ pub fn check_file(ffprobe_path: &Path, file: &Path) -> MediaFileStatus {
         };
     }
 
-    if !stderr.is_empty() {
+    if !result.stderr.is_empty() {
         return MediaFileStatus {
-            path: path_str,
+            path: file.to_string(),
             status: CheckStatus::Corrupted,
-            details: format!("ffprobe warnings: {}", stderr.trim().lines().next().unwrap_or("")),
+            details: format!(
+                "ffprobe warnings: {}",
+                result.stderr.lines().next().unwrap_or("").trim()
+            ),
             duration_secs,
             codec,
             resolution,
@@ -214,7 +178,7 @@ pub fn check_file(ffprobe_path: &Path, file: &Path) -> MediaFileStatus {
     }
 
     MediaFileStatus {
-        path: path_str,
+        path: file.to_string(),
         status: CheckStatus::Ok,
         details: "file is valid".into(),
         duration_secs,
@@ -223,25 +187,21 @@ pub fn check_file(ffprobe_path: &Path, file: &Path) -> MediaFileStatus {
     }
 }
 
-pub fn check_all_files(ffprobe_path: &Path, files: &[PathBuf]) -> Vec<MediaFileStatus> {
+pub fn check_all_files(executor: &Executor, ffprobe_path: &str, files: &[String]) -> Vec<MediaFileStatus> {
     let pb = ProgressBar::new(files.len() as u64);
     pb.set_style(
         ProgressStyle::default_bar()
             .template("{spinner:.green} [{bar:40.cyan/blue}] {pos}/{len} ({eta}) {msg}")
             .unwrap()
-            .progress_chars("█▓░"),
+            .progress_chars("##-"),
     );
 
     let results: Vec<MediaFileStatus> = files
         .iter()
         .map(|file| {
-            pb.set_message(
-                file.file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("?")
-                    .to_string(),
-            );
-            let result = check_file(ffprobe_path, file);
+            let filename = file.rsplit('/').next().unwrap_or("?");
+            pb.set_message(filename.to_string());
+            let result = check_file(executor, ffprobe_path, file);
             pb.inc(1);
             result
         })
@@ -252,7 +212,10 @@ pub fn check_all_files(ffprobe_path: &Path, files: &[PathBuf]) -> Vec<MediaFileS
 }
 
 pub fn print_check_results(results: &[MediaFileStatus]) {
-    let ok = results.iter().filter(|r| r.status == CheckStatus::Ok).count();
+    let ok = results
+        .iter()
+        .filter(|r| r.status == CheckStatus::Ok)
+        .count();
     let problems: Vec<&MediaFileStatus> = results
         .iter()
         .filter(|r| r.status != CheckStatus::Ok)
@@ -274,8 +237,9 @@ pub fn print_check_results(results: &[MediaFileStatus]) {
     for result in &problems {
         let status_str = match result.status {
             CheckStatus::Corrupted => result.status.to_string().red().bold().to_string(),
-            CheckStatus::Unreadable => result.status.to_string().red().to_string(),
-            CheckStatus::ZeroLength => result.status.to_string().red().to_string(),
+            CheckStatus::Unreadable | CheckStatus::ZeroLength => {
+                result.status.to_string().red().to_string()
+            }
             CheckStatus::MissingAudio => result.status.to_string().yellow().to_string(),
             CheckStatus::MissingVideo => result.status.to_string().yellow().bold().to_string(),
             CheckStatus::Ok => result.status.to_string().green().to_string(),

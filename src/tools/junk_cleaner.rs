@@ -1,6 +1,13 @@
+use crate::executor::Executor;
 use colored::Colorize;
-use std::path::{Path, PathBuf};
-use walkdir::WalkDir;
+use std::path::PathBuf;
+
+const JELLYFIN_SKIP_PATTERNS: &[&str] = &[
+    ".trickplay/",
+    "/metadata/",
+    "/extrafanart/",
+    "/extrathumbs/",
+];
 
 const JUNK_EXTENSIONS: &[&str] = &[
     "txt", "nfo", "url", "html", "exe", "torrent", "md5", "sha1",
@@ -34,11 +41,11 @@ const MEDIA_EXTENSIONS: &[&str] = &[
 
 const SUBTITLE_EXTENSIONS: &[&str] = &["srt", "sub", "idx", "ass", "ssa", "vtt"];
 
-const IMAGE_JUNK_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png"];
+const IMAGE_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png"];
 
 #[derive(Debug, Clone)]
 pub struct JunkFile {
-    pub path: PathBuf,
+    pub path: String,
     pub reason: String,
     pub size: u64,
     pub category: JunkCategory,
@@ -51,6 +58,7 @@ pub enum JunkCategory {
     PromoImage,
     Subtitle,
     SystemFile,
+    #[allow(dead_code)]
     Other,
 }
 
@@ -67,24 +75,40 @@ impl std::fmt::Display for JunkCategory {
     }
 }
 
-pub fn scan_junk(paths: &[PathBuf], include_subtitles: bool) -> Vec<JunkFile> {
+pub fn scan_junk(executor: &Executor, paths: &[PathBuf], include_subtitles: bool) -> Vec<JunkFile> {
     let mut junk = Vec::new();
 
     for base_path in paths {
-        for entry in WalkDir::new(base_path).into_iter().filter_map(|e| e.ok()) {
-            if !entry.file_type().is_file() {
+        let path_str = base_path.display().to_string();
+
+        let files = match executor.list_all_files(&path_str) {
+            Ok(f) => f,
+            Err(e) => {
+                eprintln!("  {} scanning {}: {e}", "Warning:".yellow(), path_str);
+                continue;
+            }
+        };
+
+        for (file_path, size) in files {
+            if JELLYFIN_SKIP_PATTERNS.iter().any(|p| file_path.contains(p)) {
                 continue;
             }
 
-            let path = entry.path();
-            let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase();
+            let filename = file_path
+                .rsplit('/')
+                .next()
+                .unwrap_or(&file_path);
+            let ext = filename
+                .rsplit('.')
+                .next()
+                .unwrap_or("")
+                .to_lowercase();
 
             if MEDIA_EXTENSIONS.contains(&ext.as_str()) {
                 continue;
             }
 
-            if let Some(junk_file) = classify_junk(path, filename, &ext, include_subtitles) {
+            if let Some(junk_file) = classify_junk(&file_path, filename, &ext, size, include_subtitles) {
                 junk.push(junk_file);
             }
         }
@@ -94,12 +118,10 @@ pub fn scan_junk(paths: &[PathBuf], include_subtitles: bool) -> Vec<JunkFile> {
     junk
 }
 
-fn classify_junk(path: &Path, filename: &str, ext: &str, include_subtitles: bool) -> Option<JunkFile> {
-    let size = path.metadata().map(|m| m.len()).unwrap_or(0);
-
+fn classify_junk(path: &str, filename: &str, ext: &str, size: u64, include_subtitles: bool) -> Option<JunkFile> {
     if JUNK_FILENAMES.contains(&filename) {
         return Some(JunkFile {
-            path: path.to_path_buf(),
+            path: path.to_string(),
             reason: "known junk filename".into(),
             size,
             category: JunkCategory::SystemFile,
@@ -109,7 +131,7 @@ fn classify_junk(path: &Path, filename: &str, ext: &str, include_subtitles: bool
     for pattern in JUNK_PATTERNS {
         if filename.contains(pattern) {
             return Some(JunkFile {
-                path: path.to_path_buf(),
+                path: path.to_string(),
                 reason: format!("torrent site marker: {pattern}"),
                 size,
                 category: JunkCategory::TorrentAd,
@@ -120,7 +142,7 @@ fn classify_junk(path: &Path, filename: &str, ext: &str, include_subtitles: bool
     if SUBTITLE_EXTENSIONS.contains(&ext) {
         if include_subtitles {
             return Some(JunkFile {
-                path: path.to_path_buf(),
+                path: path.to_string(),
                 reason: "subtitle file (flagged for review)".into(),
                 size,
                 category: JunkCategory::Subtitle,
@@ -129,9 +151,9 @@ fn classify_junk(path: &Path, filename: &str, ext: &str, include_subtitles: bool
         return None;
     }
 
-    if IMAGE_JUNK_EXTENSIONS.contains(&ext) {
+    if IMAGE_EXTENSIONS.contains(&ext) {
         return Some(JunkFile {
-            path: path.to_path_buf(),
+            path: path.to_string(),
             reason: "non-media image file".into(),
             size,
             category: JunkCategory::PromoImage,
@@ -140,7 +162,7 @@ fn classify_junk(path: &Path, filename: &str, ext: &str, include_subtitles: bool
 
     if JUNK_EXTENSIONS.contains(&ext) {
         return Some(JunkFile {
-            path: path.to_path_buf(),
+            path: path.to_string(),
             reason: format!("junk extension: .{ext}"),
             size,
             category: JunkCategory::MetadataJunk,
@@ -184,16 +206,17 @@ pub fn print_scan_results(junk: &[JunkFile]) {
         );
         for item in items {
             println!(
-                "    {} {}",
+                "    {} {} ({})",
                 "•".dimmed(),
-                item.path.display()
+                item.path,
+                item.reason.dimmed()
             );
         }
         println!();
     }
 }
 
-pub fn delete_junk(junk: &[JunkFile], skip_subtitles: bool) -> (usize, usize) {
+pub fn delete_junk(executor: &Executor, junk: &[JunkFile], skip_subtitles: bool) -> (usize, usize) {
     let mut deleted = 0;
     let mut failed = 0;
 
@@ -201,13 +224,13 @@ pub fn delete_junk(junk: &[JunkFile], skip_subtitles: bool) -> (usize, usize) {
         if skip_subtitles && item.category == JunkCategory::Subtitle {
             continue;
         }
-        match std::fs::remove_file(&item.path) {
+        match executor.delete_file(&item.path) {
             Ok(()) => {
-                println!("  {} {}", "Deleted".red(), item.path.display());
+                println!("  {} {}", "Deleted".red(), item.path);
                 deleted += 1;
             }
             Err(e) => {
-                eprintln!("  {} {} — {e}", "Failed".red().bold(), item.path.display());
+                eprintln!("  {} {} — {e}", "Failed".red().bold(), item.path);
                 failed += 1;
             }
         }

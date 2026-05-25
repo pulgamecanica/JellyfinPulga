@@ -1,0 +1,26 @@
+services:
+  jellyfin-pulga:
+    build: .
+    container_name: jellyfin-pulga
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./config.toml:/app/config.toml:ro
+      - pulga-data:/app/data
+      - /srv/media:/media/srv:ro
+      - /home/pulgamecanica-serv/Videos:/media/videos:ro
+    environment:
+      - RUST_LOG=info
+      - PULGA_DB_PATH=/app/data/jellyfin_pulga.db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/users"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  pulga-data:

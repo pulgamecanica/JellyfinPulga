@@ -30,6 +30,7 @@ pub fn api_routes() -> Router<Arc<AppState>> {
 }
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct AuthQuery {
     user_id: String,
     username: String,
