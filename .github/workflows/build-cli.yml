@@ -10,6 +10,9 @@ on:
       - 'Cargo.toml'
       - 'Cargo.lock'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
